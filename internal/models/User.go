@@ -5,6 +5,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"gorm.io/gorm"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -70,19 +71,37 @@ func (u *User) GenerateJwt(db *gorm.DB) (accessTokenSigned string, refreshTokenS
 	refreshDuration := tools.GetDurationEnv("JWT_REFRESH_LIFETIME", time.Hour*24*7)
 
 	// Создание утверждений для JWT токенов
-	jwtAccessClaims := tools.CreateJwtClaims(u.ID, JWTAccess, jwtAccessModel.ID, accessDuration)
-	jwtRefreshClaims := tools.CreateJwtClaims(u.ID, JWTRefresh, jwtRefreshModel.ID, refreshDuration)
+	jwtAccessClaims := createJwtClaims(u.ID, JWTAccess, jwtAccessModel.ID, accessDuration)
+	jwtRefreshClaims := createJwtClaims(u.ID, JWTRefresh, jwtRefreshModel.ID, refreshDuration)
 
 	// Подпись и получение JWT токенов
-	accessTokenSigned, err = tools.SignJwt(jwtAccessClaims, jwtKey)
+	accessTokenSigned, err = signJwt(jwtAccessClaims, jwtKey)
 	if err != nil {
 		return "", "", err
 	}
 
-	refreshTokenSigned, err = tools.SignJwt(jwtRefreshClaims, jwtRefreshKey)
+	refreshTokenSigned, err = signJwt(jwtRefreshClaims, jwtRefreshKey)
 	if err != nil {
 		return "", "", err
 	}
 
 	return accessTokenSigned, refreshTokenSigned, nil
+}
+
+// CreateJwtClaims : Creating a JwtCustomClaims
+func createJwtClaims(userID uint64, tokenType TokenType, tokenID uint64, expiresIn time.Duration) *JwtCustomClaims {
+	return &JwtCustomClaims{
+		UserID:    userID,
+		TokenType: tokenType,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ID:        strconv.FormatUint(uint64(tokenID), 10),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(expiresIn)),
+		},
+	}
+}
+
+// SignJwt : Signing JWT
+func signJwt(claims *JwtCustomClaims, key string) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte(key))
 }

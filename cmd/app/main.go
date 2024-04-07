@@ -11,6 +11,7 @@ import (
 	"github.com/joho/godotenv"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
 	"os"
 )
@@ -35,6 +36,10 @@ func main() {
 	e := echo.New()
 
 	e.Validator = &tools.CustomValidator{Validator: validator.New()}
+
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+	e.Use(middleware.CORS())
 
 	e.Use(middlewares.ContextDB(db))
 

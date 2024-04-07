@@ -15,5 +15,6 @@ type UserToken struct {
 	ID         uint64    `gorm:"primary_key"`
 	TokenType  TokenType `gorm:"token_type"`
 	IsDisabled bool      `gorm:"is_disabled,default:0"`
-	User       *User     `gorm:"foreignKey:id"`
+	UserID     uint64
+	User       *User `gorm:"foreignKey:UserID"`
 }

@@ -5,7 +5,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"gorm.io/gorm"
 	"os"
-	"strconv"
 	"time"
 )
 
@@ -59,43 +58,31 @@ func (u *User) ValidatePassword(password string) (bool, error) {
 }
 
 // GenerateJwt : Generate JWT
-func (u *User) GenerateJwt(db *gorm.DB) (accessTokenSigned string, refreshTokenSigned string, error error) {
-
-	jwtAccessModel := UserToken{
-		TokenType: JWTAccess,
-		User:      u,
-	}
-	jwtRefreshModel := UserToken{
-		TokenType: JWTRefresh,
-		User:      u,
-	}
+func (u *User) GenerateJwt(db *gorm.DB) (accessTokenSigned string, refreshTokenSigned string, err error) {
+	// Создание моделей токенов
+	jwtAccessModel := UserToken{TokenType: JWTAccess, User: u}
+	jwtRefreshModel := UserToken{TokenType: JWTRefresh, User: u}
 	db.Create(&jwtAccessModel)
 	db.Create(&jwtRefreshModel)
 
-	jwtAccessClaims := &JwtCustomClaims{
-		UserID:         u.ID,
-		TokenType:      JWTAccess,
-		RefreshTokenID: jwtRefreshModel.ID,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ID:        strconv.FormatUint(jwtAccessModel.ID, 10),
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 72)),
-		},
-	}
-	jwtRefreshClaims := &JwtCustomClaims{
-		UserID:        u.ID,
-		TokenType:     JWTRefresh,
-		AccessTokenID: jwtAccessModel.ID,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ID:        strconv.FormatUint(jwtRefreshModel.ID, 10),
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 72)),
-		},
+	// Получение длительности жизни токенов из переменных окружения
+	accessDuration := tools.GetDurationEnv("JWT_LIFETIME", time.Hour*3)
+	refreshDuration := tools.GetDurationEnv("JWT_REFRESH_LIFETIME", time.Hour*24*7)
+
+	// Создание утверждений для JWT токенов
+	jwtAccessClaims := tools.CreateJwtClaims(u.ID, JWTAccess, jwtAccessModel.ID, accessDuration)
+	jwtRefreshClaims := tools.CreateJwtClaims(u.ID, JWTRefresh, jwtRefreshModel.ID, refreshDuration)
+
+	// Подпись и получение JWT токенов
+	accessTokenSigned, err = tools.SignJwt(jwtAccessClaims, jwtKey)
+	if err != nil {
+		return "", "", err
 	}
 
-	jwtAccessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwtAccessClaims)
+	refreshTokenSigned, err = tools.SignJwt(jwtRefreshClaims, jwtRefreshKey)
+	if err != nil {
+		return "", "", err
+	}
 
-	accessTokenSigned, error = jwtAccessToken.SignedString([]byte(jwtKey))
-
-	jwtRefreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwtRefreshClaims)
-	refreshTokenSigned, error = jwtRefreshToken.SignedString([]byte(jwtRefreshKey))
-	return accessTokenSigned, refreshTokenSigned, error
+	return accessTokenSigned, refreshTokenSigned, nil
 }

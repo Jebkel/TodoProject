@@ -1,57 +1,71 @@
 package auth
 
 import (
-	models2 "ToDoProject/internal/models"
-	"fmt"
+	"ToDoProject/internal/models"
+	"ToDoProject/tools"
 	"github.com/labstack/echo/v4"
-	"gorm.io/gorm"
+	"github.com/labstack/gommon/log"
 	"net/http"
 )
 
 // Register : Register RouterAuth
 func (RouterAuth) Register(c echo.Context) error {
+	// Структура для тела запроса
 	type RequestBody struct {
-		Username string `json:"username" validate:"required"`
-		Password string `json:"password" validate:"required"`
-
+		Username    string `json:"username" validate:"required"`
+		Password    string `json:"password" validate:"required"`
 		DisplayName string `json:"display_name" validate:"required"`
 	}
 
 	var body RequestBody
 
+	// Привязка данных запроса к структуре
 	if err := c.Bind(&body); err != nil {
 		return err
 	}
+
+	// Валидация данных запроса
 	if err := c.Validate(&body); err != nil {
 		return err
 	}
 
-	db, _ := c.Get("db").(*gorm.DB)
+	// Получение подключения к базе данных
+	db := tools.GetDBFromContext(c)
 
-	if err := db.Where("username = ?", body.Username).First(&models2.User{}).Error; err == nil {
-		fmt.Println(err)
+	// Проверка наличия пользователя с таким же именем
+	var user models.User
+
+	if db.Where("username = ?", body.Username).First(&user).Error == nil {
 		return c.NoContent(http.StatusConflict)
 	}
 
-	user := models2.User{
-		Username: body.Username,
-		Password: body.Password,
-
+	// Создание нового пользователя
+	user = models.User{
+		Username:    body.Username,
+		Password:    body.Password,
 		DisplayName: body.DisplayName,
 	}
 
-	err := user.HashPassword()
-	if err != nil {
+	// Хеширование пароля пользователя
+	if err := user.HashPassword(); err != nil {
+		log.Error(err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
-	db.Create(&user)
+	// Сохранение пользователя в базе данных
+	if err := db.Create(&user).Error; err != nil {
+		log.Error(err)
+		return c.NoContent(http.StatusInternalServerError)
+	}
 
+	// Генерация JWT токенов
 	accessToken, refreshToken, err := user.GenerateJwt(db)
 	if err != nil {
+		log.Error(err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
+	// Возврат ответа с JWT токенами и информацией о пользователе
 	return c.JSON(http.StatusOK, echo.Map{
 		"access_token":  accessToken,
 		"refresh_token": refreshToken,
@@ -61,34 +75,50 @@ func (RouterAuth) Register(c echo.Context) error {
 
 // Login : Login RouterAuth
 func (RouterAuth) Login(c echo.Context) error {
+	// Структура для тела запроса
 	type RequestBody struct {
 		Username string `json:"username" validate:"required"`
 		Password string `json:"password" validate:"required"`
 	}
 
 	var body RequestBody
+
+	// Привязка данных запроса к структуре
 	if err := c.Bind(&body); err != nil {
-		return c.NoContent(http.StatusBadRequest)
+		return err
 	}
+
+	// Валидация данных запроса
 	if err := c.Validate(&body); err != nil {
 		return err
 	}
 
-	db, _ := c.Get("db").(*gorm.DB)
+	// Получение подключения к базе данных
+	db := tools.GetDBFromContext(c)
 
-	var user models2.User
+	// Проверка наличия пользователя с таким же именем
+	var user models.User
 
 	if err := db.Where("username = ?", body.Username).First(&user).Error; err != nil {
 		return c.NoContent(http.StatusBadRequest)
 	}
+
+	// Проверка пароля
 	check, err := user.ValidatePassword(body.Password)
 	if err != nil || !check {
-		return c.NoContent(http.StatusBadRequest)
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"error": "Invalid email or password",
+		})
 	}
+
+	// Генерация JWT токенов
 	accessToken, refreshToken, err := user.GenerateJwt(db)
 	if err != nil {
+		log.Error(err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
+
+	// Возврат ответа с JWT токенами и информацией о пользователе
 	return c.JSON(http.StatusOK, echo.Map{
 		"access_token":  accessToken,
 		"refresh_token": refreshToken,
@@ -97,17 +127,20 @@ func (RouterAuth) Login(c echo.Context) error {
 }
 
 func (RouterAuth) Logout(c echo.Context) error {
-	db, _ := c.Get("db").(*gorm.DB)
-	jwtClaims, _ := c.Get("jwt_claims").(*models2.JwtCustomClaims)
-	db.Model(&models2.UserToken{}).Where("id = ?", jwtClaims.RefreshTokenID).Update("is_disabled",
+	// Получение коннекта с бд из контекста echo
+	db := tools.GetDBFromContext(c)
+
+	// Получение JWT токена из контекста и обновление их в бд, как не работающие
+	jwtClaims := tools.GetJWTFromContext(c)
+	db.Model(&models.UserToken{}).Where("id = ?", jwtClaims.RefreshTokenID).Update("is_disabled",
 		true)
-	db.Model(&models2.UserToken{}).Where(" = ?", jwtClaims.ID).Update("is_disabled", true)
+	db.Model(&models.UserToken{}).Where(" = ?", jwtClaims.ID).Update("is_disabled", true)
 
 	return c.NoContent(http.StatusNoContent)
 }
 
 func (RouterAuth) Me(c echo.Context) error {
-	user := c.Get("db_user").(*models2.User)
+	user := c.Get("db_user").(*models.User)
 
 	return c.JSON(http.StatusOK, echo.Map{
 		"user": user,
@@ -115,18 +148,24 @@ func (RouterAuth) Me(c echo.Context) error {
 }
 
 func (RouterAuth) RefreshJWTToken(c echo.Context) error {
-	db, _ := c.Get("db").(*gorm.DB)
-	jwtClaims, _ := c.Get("jwt_claims").(*models2.JwtCustomClaims)
-	user := c.Get("db_user").(*models2.User)
+	// Получение данных из echo контекста
+	db := tools.GetDBFromContext(c)
+	jwtClaims := tools.GetJWTFromContext(c)
+	user := tools.GetUserModelFromContext(c)
 
-	db.Model(&models2.UserToken{}).Where("id = ?", jwtClaims.AccessTokenID).Update("is_disabled",
+	// Обновление JWT токенов в бд, как не рабочие
+	db.Model(&models.UserToken{}).Where("id = ?", jwtClaims.AccessTokenID).Update("is_disabled",
 		true)
-	db.Model(&models2.UserToken{}).Where("id = ?", jwtClaims.ID).Update("is_disabled", true)
+	db.Model(&models.UserToken{}).Where("id = ?", jwtClaims.ID).Update("is_disabled", true)
 
+	// Генерация новых JWT токенов
 	accessToken, refreshToken, err := user.GenerateJwt(db)
 	if err != nil {
+		log.Error(err)
 		return c.NoContent(http.StatusInternalServerError)
 	}
+
+	// Возврат ответа с JWT токенами и информацией о пользователе
 	return c.JSON(http.StatusOK, echo.Map{
 		"access_token":  accessToken,
 		"refresh_token": refreshToken,

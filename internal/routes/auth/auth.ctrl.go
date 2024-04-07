@@ -1,16 +1,11 @@
 package auth
 
 import (
-	"ToDoProject/database/models"
+	models2 "ToDoProject/internal/models"
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 	"net/http"
-	"os"
-)
-
-var (
-	jwtKey = os.Getenv("JWT_KEY")
 )
 
 // Register : Register RouterAuth
@@ -33,12 +28,12 @@ func (RouterAuth) Register(c echo.Context) error {
 
 	db, _ := c.Get("db").(*gorm.DB)
 
-	if err := db.Where("username = ?", body.Username).First(&models.User{}).Error; err == nil {
+	if err := db.Where("username = ?", body.Username).First(&models2.User{}).Error; err == nil {
 		fmt.Println(err)
 		return c.NoContent(http.StatusConflict)
 	}
 
-	user := models.User{
+	user := models2.User{
 		Username: body.Username,
 		Password: body.Password,
 
@@ -81,7 +76,7 @@ func (RouterAuth) Login(c echo.Context) error {
 
 	db, _ := c.Get("db").(*gorm.DB)
 
-	var user models.User
+	var user models2.User
 
 	if err := db.Where("username = ?", body.Username).First(&user).Error; err != nil {
 		return c.NoContent(http.StatusBadRequest)
@@ -103,16 +98,16 @@ func (RouterAuth) Login(c echo.Context) error {
 
 func (RouterAuth) Logout(c echo.Context) error {
 	db, _ := c.Get("db").(*gorm.DB)
-	jwtClaims, _ := c.Get("jwt_claims").(*models.JwtCustomClaims)
-	db.Model(&models.UserToken{}).Where("id = ?", jwtClaims.RefreshTokenID).Update("is_disabled",
+	jwtClaims, _ := c.Get("jwt_claims").(*models2.JwtCustomClaims)
+	db.Model(&models2.UserToken{}).Where("id = ?", jwtClaims.RefreshTokenID).Update("is_disabled",
 		true)
-	db.Model(&models.UserToken{}).Where(" = ?", jwtClaims.ID).Update("is_disabled", true)
+	db.Model(&models2.UserToken{}).Where(" = ?", jwtClaims.ID).Update("is_disabled", true)
 
 	return c.NoContent(http.StatusNoContent)
 }
 
 func (RouterAuth) Me(c echo.Context) error {
-	user := c.Get("db_user").(*models.User)
+	user := c.Get("db_user").(*models2.User)
 
 	return c.JSON(http.StatusOK, echo.Map{
 		"user": user,
@@ -121,12 +116,12 @@ func (RouterAuth) Me(c echo.Context) error {
 
 func (RouterAuth) RefreshJWTToken(c echo.Context) error {
 	db, _ := c.Get("db").(*gorm.DB)
-	jwtClaims, _ := c.Get("jwt_claims").(*models.JwtCustomClaims)
-	user := c.Get("db_user").(*models.User)
+	jwtClaims, _ := c.Get("jwt_claims").(*models2.JwtCustomClaims)
+	user := c.Get("db_user").(*models2.User)
 
-	db.Model(&models.UserToken{}).Where("id = ?", jwtClaims.AccessTokenID).Update("is_disabled",
+	db.Model(&models2.UserToken{}).Where("id = ?", jwtClaims.AccessTokenID).Update("is_disabled",
 		true)
-	db.Model(&models.UserToken{}).Where("id = ?", jwtClaims.ID).Update("is_disabled", true)
+	db.Model(&models2.UserToken{}).Where("id = ?", jwtClaims.ID).Update("is_disabled", true)
 
 	accessToken, refreshToken, err := user.GenerateJwt(db)
 	if err != nil {

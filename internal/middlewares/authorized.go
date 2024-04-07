@@ -1,7 +1,7 @@
 package middlewares
 
 import (
-	"ToDoProject/database/models"
+	models2 "ToDoProject/internal/models"
 	"errors"
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
@@ -18,7 +18,7 @@ var (
 )
 
 // Authorized : Check Auth
-func Authorized(tokenType models.TokenType) echo.MiddlewareFunc {
+func Authorized(tokenType models2.TokenType) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			tokenHeader := c.Request().Header.Get("Authorization")
@@ -32,14 +32,14 @@ func Authorized(tokenType models.TokenType) echo.MiddlewareFunc {
 			}
 
 			db := c.Get("db").(*gorm.DB)
-			var userTokenModel models.UserToken
+			var userTokenModel models2.UserToken
 
 			db.First(&userTokenModel, claims.ID)
 			if userTokenModel.IsDisabled {
 				return c.NoContent(http.StatusUnauthorized)
 			}
 
-			var user models.User
+			var user models2.User
 			result := db.First(&user, claims.UserID)
 			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 				return c.JSON(http.StatusUnauthorized, echo.Map{"error": "User not found"})
@@ -52,9 +52,9 @@ func Authorized(tokenType models.TokenType) echo.MiddlewareFunc {
 	}
 }
 
-func parseJWTClaims(tokenHeader string) (*models.JwtCustomClaims, error) {
+func parseJWTClaims(tokenHeader string) (*models2.JwtCustomClaims, error) {
 	tokenString := strings.Replace(tokenHeader, "Bearer ", "", 1)
-	token, err := jwt.ParseWithClaims(tokenString, &models.JwtCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &models2.JwtCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
@@ -65,7 +65,7 @@ func parseJWTClaims(tokenHeader string) (*models.JwtCustomClaims, error) {
 		return nil, errors.New("invalid token")
 	}
 
-	claims, ok := token.Claims.(*models.JwtCustomClaims)
+	claims, ok := token.Claims.(*models2.JwtCustomClaims)
 	if !ok || claims == nil {
 		log.Error("failed to parse JWT claims")
 		return nil, errors.New("invalid token")

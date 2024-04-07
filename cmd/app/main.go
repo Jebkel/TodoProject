@@ -1,14 +1,13 @@
 package main
 
 import (
-	"ToDoProject/app/middlewares"
-	"ToDoProject/database"
-	"ToDoProject/routes"
-	"ToDoProject/utils"
+	"ToDoProject/internal/database"
+	"ToDoProject/internal/middlewares"
+	"ToDoProject/internal/routes"
+	"ToDoProject/tools"
 	"database/sql"
 	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
-	_ "github.com/joho/godotenv/autoload"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
 )
@@ -22,7 +21,7 @@ func init() {
 }
 
 func main() {
-	db, sqlDB := database.Connect()
+	db, sqlDB := database.ConnectDB()
 	defer func(sqlDB *sql.DB) {
 		err := sqlDB.Close()
 		if err != nil {
@@ -32,7 +31,7 @@ func main() {
 
 	e := echo.New()
 
-	e.Validator = &utils.CustomValidator{Validator: validator.New()}
+	e.Validator = &tools.CustomValidator{Validator: validator.New()}
 
 	e.Use(middlewares.ContextDB(db))
 

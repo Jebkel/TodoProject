@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"ToDoProject/routes/auth"
+	"ToDoProject/internal/routes/auth"
 	"github.com/labstack/echo/v4"
 )
 

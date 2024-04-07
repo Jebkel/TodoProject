@@ -1,8 +1,8 @@
 package auth
 
 import (
-	"ToDoProject/app/middlewares"
-	"ToDoProject/database/models"
+	"ToDoProject/internal/middlewares"
+	"ToDoProject/internal/models"
 	"github.com/labstack/echo/v4"
 )
 

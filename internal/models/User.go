@@ -1,7 +1,7 @@
 package models
 
 import (
-	"ToDoProject/utils"
+	"ToDoProject/tools"
 	"github.com/golang-jwt/jwt/v5"
 	"gorm.io/gorm"
 	"os"
@@ -31,7 +31,7 @@ type JwtCustomClaims struct {
 var (
 	jwtKey        = os.Getenv("JWT_KEY")
 	jwtRefreshKey = os.Getenv("JWT_REFRESH_KEY")
-	argonP        = &utils.ArgonParams{
+	argonP        = &tools.ArgonParams{
 		Memory:      64 * 1024,
 		Iterations:  2,
 		Parallelism: 2,
@@ -42,7 +42,7 @@ var (
 
 // HashPassword : Hash Password
 func (u *User) HashPassword() error {
-	encodedHash, err := utils.GenerateFromPassword(u.Password, argonP)
+	encodedHash, err := tools.GenerateFromPassword(u.Password, argonP)
 	if err != nil {
 		return err
 	}
@@ -51,7 +51,7 @@ func (u *User) HashPassword() error {
 }
 
 func (u *User) ValidatePassword(password string) (bool, error) {
-	match, err := utils.ComparePasswordAndHash(password, u.Password)
+	match, err := tools.ComparePasswordAndHash(password, u.Password)
 	if err != nil {
 		return false, err
 	}

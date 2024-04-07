@@ -132,7 +132,7 @@ func (RouterAuth) Logout(c echo.Context) error {
 
 	// Получение JWT токена из контекста и обновление их в бд, как не работающие
 	jwtClaims, _ := c.Get("jwt_claims").(*models.JwtCustomClaims)
-	db.Model(&models.UserToken{}).Where("id = ?", jwtClaims.RefreshTokenID).Update("is_disabled",
+	db.Model(&models.UserToken{}).Where("id = ?", jwtClaims.LinkedTokenID).Update("is_disabled",
 		true)
 	db.Model(&models.UserToken{}).Where(" = ?", jwtClaims.ID).Update("is_disabled", true)
 
@@ -152,9 +152,8 @@ func (RouterAuth) RefreshJWTToken(c echo.Context) error {
 	db := tools.GetDBFromContext(c)
 	jwtClaims, _ := c.Get("jwt_claims").(*models.JwtCustomClaims)
 	user, _ := c.Get("db_user").(*models.User)
-
 	// Обновление JWT токенов в бд, как не рабочие
-	db.Model(&models.UserToken{}).Where("id = ?", jwtClaims.AccessTokenID).Update("is_disabled",
+	db.Model(&models.UserToken{}).Where("id = ?", jwtClaims.LinkedTokenID).Update("is_disabled",
 		true)
 	db.Model(&models.UserToken{}).Where("id = ?", jwtClaims.ID).Update("is_disabled", true)
 

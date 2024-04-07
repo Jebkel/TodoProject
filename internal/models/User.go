@@ -21,10 +21,9 @@ type User struct {
 }
 
 type JwtCustomClaims struct {
-	UserID         uint64    `json:"user_id"`
-	TokenType      TokenType `json:"token_type"`
-	AccessTokenID  uint64    `json:"access_token_id,omitempty"`
-	RefreshTokenID uint64    `json:"refresh_token_id,omitempty"`
+	UserID        uint64    `json:"user_id"`
+	TokenType     TokenType `json:"token_type"`
+	LinkedTokenID uint64    `json:"linked_token_id,omitempty"`
 	jwt.RegisteredClaims
 }
 
@@ -71,8 +70,8 @@ func (u *User) GenerateJwt(db *gorm.DB) (accessTokenSigned string, refreshTokenS
 	refreshDuration := tools.GetDurationEnv("JWT_REFRESH_LIFETIME", time.Hour*24*7)
 
 	// Создание утверждений для JWT токенов
-	jwtAccessClaims := createJwtClaims(u.ID, JWTAccess, jwtAccessModel.ID, accessDuration)
-	jwtRefreshClaims := createJwtClaims(u.ID, JWTRefresh, jwtRefreshModel.ID, refreshDuration)
+	jwtAccessClaims := createJwtClaims(u.ID, JWTAccess, jwtAccessModel.ID, accessDuration, jwtRefreshModel.ID)
+	jwtRefreshClaims := createJwtClaims(u.ID, JWTRefresh, jwtRefreshModel.ID, refreshDuration, jwtAccessModel.ID)
 
 	// Подпись и получение JWT токенов
 	accessTokenSigned, err = signJwt(jwtAccessClaims, jwtKey)
@@ -89,10 +88,11 @@ func (u *User) GenerateJwt(db *gorm.DB) (accessTokenSigned string, refreshTokenS
 }
 
 // CreateJwtClaims : Creating a JwtCustomClaims
-func createJwtClaims(userID uint64, tokenType TokenType, tokenID uint64, expiresIn time.Duration) *JwtCustomClaims {
+func createJwtClaims(userID uint64, tokenType TokenType, tokenID uint64, expiresIn time.Duration, linkedTokenId uint64) *JwtCustomClaims {
 	return &JwtCustomClaims{
-		UserID:    userID,
-		TokenType: tokenType,
+		UserID:        userID,
+		TokenType:     tokenType,
+		LinkedTokenID: linkedTokenId,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ID:        strconv.FormatUint(uint64(tokenID), 10),
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(expiresIn)),

@@ -61,7 +61,7 @@ func ContextJWT() echo.MiddlewareFunc {
 			}
 			c.Set("jwt_claims", claims)
 			c.Set("db_user", &user)
-			log.Info(user)
+
 			return next(c)
 		}
 	}

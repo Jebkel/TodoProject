@@ -65,13 +65,8 @@ func (eh *HttpErrorHandler) Handler(err error, c echo.Context) {
 		language := c.Get("lang").(string)
 		options := goeasyi18n.Options{}
 		for _, e := range errs {
-			fmt.Println(language)
-			fmt.Println(fmt.Sprintf("field_%s", stringy.New(e.Tag()).SnakeCase().ToLower()))
-			fmt.Println(i18n.T(language,
-				fmt.Sprintf("field_%s", stringy.New(e.Tag()).SnakeCase().ToLower()),
-				options))
-			errorsMessages[e.Field()] = i18n.T(language,
-				fmt.Sprintf("field_%s", stringy.New(e.Tag()).SnakeCase().ToLower()),
+			errorsMessages[stringy.New(e.Field()).SnakeCase().ToLower()] = i18n.T(language,
+				fmt.Sprintf("field_%s", e.Tag()),
 				options)
 		}
 		he = &echo.HTTPError{

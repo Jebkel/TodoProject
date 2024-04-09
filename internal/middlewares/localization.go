@@ -5,7 +5,6 @@ import (
 	"ToDoProject/tools"
 	"github.com/eduardolat/goeasyi18n"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/gommon/log"
 )
 
 func Localization(i18n *goeasyi18n.I18n) echo.MiddlewareFunc {
@@ -13,15 +12,13 @@ func Localization(i18n *goeasyi18n.I18n) echo.MiddlewareFunc {
 		return func(c echo.Context) error {
 			dbUser := c.Get("db_user")
 			language := "en"
-			log.Info(dbUser)
+
 			if user, ok := dbUser.(*models.User); ok {
-				log.Infof("user language: %v", user.Language)
+
 				language = user.Language
 			} else if acceptLanguageHeader := c.Request().Header.Get("Accept-Language"); acceptLanguageHeader != "" {
 				language = tools.ParseAcceptLanguage(acceptLanguageHeader)[0].Lang
-				log.Infof("language header: %s", tools.ParseAcceptLanguage(acceptLanguageHeader)[0].Lang)
 			}
-			log.Infof("result language: %s", language)
 			c.Set("i18n", i18n)
 			c.Set("lang", language)
 			return next(c)

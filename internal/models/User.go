@@ -14,8 +14,9 @@ type User struct {
 	ID uint64 `gorm:"primary_key"`
 
 	Username    string
-	Password    string
+	Password    string `json:"-"`
 	DisplayName string
+	Language    string `gorm:"default:'en'"`
 
 	UserTokens []UserToken
 }

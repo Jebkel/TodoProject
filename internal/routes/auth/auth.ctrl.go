@@ -12,9 +12,9 @@ import (
 func (RouterAuth) Register(c echo.Context) error {
 	// Структура для тела запроса
 	type RequestBody struct {
-		Username    string `json:"username" validate:"required"`
-		Password    string `json:"password" validate:"required"`
-		DisplayName string `json:"display_name" validate:"required"`
+		Username    string `json:"username" validate:"required,gte=6,lte=32,"`
+		Password    string `json:"password" validate:"required,gte=8,lte=255"`
+		DisplayName string `json:"display_name" validate:"required,gte=6,lte=32"`
 	}
 
 	var body RequestBody
@@ -137,38 +137,4 @@ func (RouterAuth) Logout(c echo.Context) error {
 	db.Model(&models.UserToken{}).Where(" = ?", jwtClaims.ID).Update("is_disabled", true)
 
 	return c.NoContent(http.StatusNoContent)
-}
-
-func (RouterAuth) Me(c echo.Context) error {
-	user := c.Get("db_user").(*models.User)
-
-	return c.JSON(http.StatusOK, echo.Map{
-		"user": user,
-	})
-}
-
-func (RouterAuth) RefreshJWTToken(c echo.Context) error {
-	// Получение данных из echo контекста
-	db := tools.GetDBFromContext(c)
-	jwtClaims, _ := c.Get("jwt_claims").(*models.JwtCustomClaims)
-	user, _ := c.Get("db_user").(*models.User)
-	// Обновление JWT токенов в бд, как не рабочие
-	db.Model(&models.UserToken{}).Where("id = ?", jwtClaims.LinkedTokenID).Update("is_disabled",
-		true)
-	db.Model(&models.UserToken{}).Where("id = ?", jwtClaims.ID).Update("is_disabled", true)
-
-	// Генерация новых JWT токенов
-	accessToken, refreshToken, err := user.GenerateJwt(db)
-	if err != nil {
-		log.Error(err)
-		return c.NoContent(http.StatusInternalServerError)
-	}
-
-	// Возврат ответа с JWT токенами и информацией о пользователе
-	return c.JSON(http.StatusOK, echo.Map{
-		"access_token":  accessToken,
-		"refresh_token": refreshToken,
-		"user":          user,
-	})
-
 }

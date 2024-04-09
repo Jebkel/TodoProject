@@ -1,8 +1,10 @@
 package tools
 
-import "github.com/go-playground/validator/v10"
+import (
+	"github.com/go-playground/validator/v10"
+)
 
-// CutstomValidator :
+// CustomValidator : custom validator
 type CustomValidator struct {
 	Validator *validator.Validate
 }

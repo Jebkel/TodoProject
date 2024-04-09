@@ -4,6 +4,7 @@ import (
 	"ToDoProject/internal/database"
 	"ToDoProject/internal/middlewares"
 	"ToDoProject/internal/routes"
+	"ToDoProject/locales"
 	"ToDoProject/tools"
 	"database/sql"
 	"fmt"
@@ -35,13 +36,17 @@ func main() {
 
 	e := echo.New()
 
+	i18n := locales.Init()
+
+	e.HTTPErrorHandler = middlewares.NewHttpErrorHandler(tools.NewErrorStatusCodeMaps()).Handler
 	e.Validator = &tools.CustomValidator{Validator: validator.New()}
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORS())
-
 	e.Use(middlewares.ContextDB(db))
+	e.Use(middlewares.ContextJWT())
+	e.Use(middlewares.Localization(i18n))
 
 	routes.Routes(e.Group(""))
 

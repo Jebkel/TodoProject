@@ -2,5 +2,21 @@
   {
     "Key": "field_required",
     "Default": "Это поле обязательное."
+  },
+  {
+    "Key": "field_gte",
+    "Default": "Поле должно содержать более {{.valData}} символов."
+  },
+  {
+    "Key": "field_lte",
+    "Default": "Поле должно содержать менее {{.valData}} символов."
+  },
+  {
+    "Key": "invalid_login_or_password",
+    "Default": "Не верный логин или пароль"
+  },
+  {
+    "Key": "bad_old_password",
+    "Default": "Не верный старый пароль"
   }
 ]

@@ -3,6 +3,7 @@ package user
 import (
 	"ToDoProject/internal/models"
 	"ToDoProject/tools"
+	"github.com/eduardolat/goeasyi18n"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
 	"net/http"
@@ -77,8 +78,10 @@ func (RouterUser) UpdatePassword(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 	if !checkPassword {
+		i18n := c.Get("i18n").(*goeasyi18n.I18n)
+		language := c.Get("lang").(string)
 		return c.JSON(http.StatusBadRequest, echo.Map{
-			"error": "Wrong old password",
+			"error": i18n.T(language, "bad_old_password", goeasyi18n.Options{}),
 		})
 	}
 	user.Password = body.NewPassword

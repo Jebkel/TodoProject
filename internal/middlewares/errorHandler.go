@@ -63,11 +63,14 @@ func (eh *HttpErrorHandler) Handler(err error, c echo.Context) {
 		errorsMessages := map[string]interface{}{}
 		i18n := c.Get("i18n").(*goeasyi18n.I18n)
 		language := c.Get("lang").(string)
-		options := goeasyi18n.Options{}
 		for _, e := range errs {
 			errorsMessages[stringy.New(e.Field()).SnakeCase().ToLower()] = i18n.T(language,
 				fmt.Sprintf("field_%s", e.Tag()),
-				options)
+				goeasyi18n.Options{
+					Data: map[string]string{
+						"valData": e.Param(),
+					},
+				})
 		}
 		he = &echo.HTTPError{
 			Code:    eh.getStatusCode(err),

@@ -3,6 +3,7 @@ package auth
 import (
 	"ToDoProject/internal/models"
 	"ToDoProject/tools"
+	"github.com/eduardolat/goeasyi18n"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
 	"net/http"
@@ -12,7 +13,7 @@ import (
 func (RouterAuth) Register(c echo.Context) error {
 	// Структура для тела запроса
 	type RequestBody struct {
-		Username    string `json:"username" validate:"required,gte=6,lte=32,"`
+		Username    string `json:"username" validate:"required,gte=6,lte=32"`
 		Password    string `json:"password" validate:"required,gte=8,lte=255"`
 		DisplayName string `json:"display_name" validate:"required,gte=6,lte=32"`
 	}
@@ -106,8 +107,10 @@ func (RouterAuth) Login(c echo.Context) error {
 	// Проверка пароля
 	check, err := user.ValidatePassword(body.Password)
 	if err != nil || !check {
+		i18n := c.Get("i18n").(*goeasyi18n.I18n)
+		language := c.Get("lang").(string)
 		return c.JSON(http.StatusBadRequest, echo.Map{
-			"error": "Invalid email or password",
+			"errors": i18n.T(language, "invalid_login_or_password", goeasyi18n.Options{}),
 		})
 	}
 

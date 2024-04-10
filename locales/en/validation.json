@@ -2,5 +2,21 @@
   {
     "Key": "field_required",
     "Default": "This field is required."
+  },
+  {
+    "Key": "field_gte",
+    "Default": "The field must be more than {{.valData}} characters."
+  },
+  {
+    "Key": "field_lte",
+    "Default": "The field must be less than {{.valData}} characters."
+  },
+  {
+    "Key": "invalid_login_or_password",
+    "Default": "Invalid username or password"
+  },
+  {
+    "Key": "bad_old_password",
+    "Default": "Invalid old password"
   }
 ]

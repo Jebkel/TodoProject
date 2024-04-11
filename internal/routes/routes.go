@@ -2,8 +2,8 @@ package routes
 
 import (
 	"ToDoProject/internal/routes/auth"
-	"ToDoProject/internal/routes/passwordRecovery"
 	"ToDoProject/internal/routes/user"
+	"ToDoProject/internal/routes/user/passwordRecovery"
 	"github.com/labstack/echo/v4"
 )
 

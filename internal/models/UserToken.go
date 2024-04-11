@@ -5,9 +5,8 @@ import "gorm.io/gorm"
 type TokenType string
 
 const (
-	JWTAccess     TokenType = "jwt_access"     // Используется, для получения доступа к защищённым данным
-	JWTRefresh    TokenType = "jwt_refresh"    // Используется, для обновление JWTAccess, доступа к данным не имеет
-	PasswordReset TokenType = "password_reset" // Используется, для обновления пароля
+	JWTAccess  TokenType = "jwt_access"  // Используется, для получения доступа к защищённым данным
+	JWTRefresh TokenType = "jwt_refresh" // Используется, для обновление JWTAccess, доступа к данным не имеет
 )
 
 type UserToken struct {

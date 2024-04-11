@@ -1,18 +1,29 @@
 package user
 
 import (
+	"ToDoProject/internal/mail"
+	"ToDoProject/internal/mail/structures"
 	"ToDoProject/internal/models"
 	"ToDoProject/tools"
+	"fmt"
 	"github.com/eduardolat/goeasyi18n"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
+	"math/rand"
 	"net/http"
+	"os"
+	"time"
 )
 
 type ApiError struct {
 	Param   string
 	Message string
 }
+
+var (
+	MAIL_PORT = os.Getenv("MAIL_PORT")
+	MAIL_HOST = os.Getenv("MAIL_HOST")
+)
 
 func (RouterUser) Me(c echo.Context) error {
 	user := c.Get("db_user").(*models.User)
@@ -89,5 +100,68 @@ func (RouterUser) UpdatePassword(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 	db.Save(&user)
+	return c.NoContent(http.StatusNoContent)
+}
+
+func (RouterUser) SendPasswordResetCode(c echo.Context) error {
+	type RequestBody struct {
+		Username string `json:"username" validate:"required"`
+	}
+	var body RequestBody
+
+	// Привязка данных запроса к структуре
+	if err := c.Bind(&body); err != nil {
+		return err
+	}
+
+	// Валидация данных запроса
+	if err := c.Validate(&body); err != nil {
+		return err
+	}
+
+	db := tools.GetDBFromContext(c)
+
+	var user models.User
+
+	if db.Where("username = ?", body.Username).First(&user).Error != nil {
+		// Отправляем, что всё окей, что бы нельзя было перебирать пользователей
+		return c.NoContent(http.StatusOK)
+	}
+
+	// Генерируем 8-значный код для подтверждения
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	const numbers = "0123456789"
+	var resultCode string
+	for i := 0; i < 8; i++ {
+		resultCode += string(numbers[r.Intn(len(numbers))])
+	}
+
+	// Удаление прошлых кодов востановления для пользователя
+	db.Where("user_id = ?", user.ID).Delete(&models.PasswordResetCode{})
+
+	// Создание записи в бд
+	passwordResetModel := models.PasswordResetCode{
+		User:  &user,
+		Token: resultCode,
+	}
+	passwordResetModel.HashToken()
+	db.Create(&passwordResetModel)
+
+	// Отправка кода на mail
+	mailer := c.Get("mailer").(*mail.Mailer)
+	i18n := c.Get("i18n").(*goeasyi18n.I18n)
+	language := c.Get("lang").(string)
+	mailer.QueueEmail("test@gmail.com", "Востановление пароля", structures.MessagesData{
+		PreHeader: i18n.T(language, fmt.Sprintf("password_reeset"), goeasyi18n.Options{}),
+		Messages: []string{
+			i18n.T(language, "password_reset_msg_1", goeasyi18n.Options{}),
+			i18n.T(language, "password_reset_msg_2", goeasyi18n.Options{
+				Data: map[string]string{
+					"Code": resultCode,
+				},
+			}),
+			i18n.T(language, "password_reset_msg_3", goeasyi18n.Options{}),
+		},
+	})
 	return c.NoContent(http.StatusNoContent)
 }

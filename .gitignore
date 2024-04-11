@@ -1,3 +1,4 @@
 .env
 .idea
 internal/database/data.db
+mailpit.exe

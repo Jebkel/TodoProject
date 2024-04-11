@@ -95,7 +95,7 @@ func createJwtClaims(userID uint64, tokenType TokenType, tokenID uint64, expires
 		TokenType:     tokenType,
 		LinkedTokenID: linkedTokenId,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ID:        strconv.FormatUint(uint64(tokenID), 10),
+			ID:        strconv.FormatUint(tokenID, 10),
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(expiresIn)),
 		},
 	}

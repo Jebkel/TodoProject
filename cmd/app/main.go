@@ -2,6 +2,7 @@ package main
 
 import (
 	"ToDoProject/internal/database"
+	"ToDoProject/internal/mail"
 	"ToDoProject/internal/middlewares"
 	"ToDoProject/internal/routes"
 	"ToDoProject/locales"
@@ -41,9 +42,15 @@ func main() {
 	e.HTTPErrorHandler = middlewares.NewHttpErrorHandler(tools.NewErrorStatusCodeMaps()).Handler
 	e.Validator = &tools.CustomValidator{Validator: validator.New()}
 
+	mailer := &mail.Mailer{}
+	mailer.Init()
+	go mailer.StartHandling()
+
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORS())
+
+	e.Use(middlewares.ContextMail(mailer))
 	e.Use(middlewares.ContextDB(db))
 	e.Use(middlewares.ContextJWT())
 	e.Use(middlewares.Localization(i18n))

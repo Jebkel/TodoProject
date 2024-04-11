@@ -1,0 +1,18 @@
+[
+  {
+    "Key": "password_reeset",
+    "Default": "Password Reset"
+  },
+  {
+    "Key": "password_reset_msg_1",
+    "Default": "Looks like someone is trying to recover your password"
+  },
+  {
+    "Key": "password_reset_msg_2",
+    "Default": "Your password recovery code: {{ .Code }}"
+  },
+  {
+    "Key": "password_reset_msg_3",
+    "Default": "If you are not the one trying to recover your password, just ignore this email."
+  }
+]

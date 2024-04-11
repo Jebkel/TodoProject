@@ -14,5 +14,13 @@
   {
     "Key": "password_reset_msg_3",
     "Default": "If you are not the one trying to recover your password, just ignore this email."
+  },
+  {
+    "Key": "incorrect_code",
+    "Default": "Incorrect code"
+  },
+  {
+    "Key": "password_already_using",
+    "Default": "You are already using this password"
   }
 ]

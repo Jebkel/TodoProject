@@ -3,6 +3,7 @@ package models
 import (
 	"ToDoProject/tools"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/labstack/gommon/log"
 	"gorm.io/gorm"
 	"os"
 	"strconv"
@@ -51,6 +52,7 @@ func (u *User) HashPassword() error {
 }
 
 func (u *User) ValidatePassword(password string) (bool, error) {
+	log.Info(u.Password)
 	match, err := tools.ComparePasswordAndHash(password, u.Password)
 	if err != nil {
 		return false, err

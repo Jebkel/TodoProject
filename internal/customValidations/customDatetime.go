@@ -8,7 +8,6 @@ import (
 
 func customDateTime(fl validator.FieldLevel) bool {
 	dateStr := fl.Field().String()
-
 	layout := "02.01.2006 15:04"
 
 	// Парсинг происходит в формате UTC

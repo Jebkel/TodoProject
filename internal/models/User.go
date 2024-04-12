@@ -12,14 +12,14 @@ import (
 
 type User struct {
 	gorm.Model
-	ID uint64 `gorm:"primary_key"`
+	ID uint64 `json:"id" gorm:"primary_key"`
 
-	Username    string
+	Username    string `json:"username" gorm:"uniqueIndex"`
 	Password    string `json:"-"`
-	DisplayName string
-	Language    string `gorm:"default:'en'"`
+	DisplayName string `json:"display_name"`
+	Language    string `json:"language" gorm:"default:'en'"`
 
-	UserTokens []UserToken
+	UserTokens []UserToken `json:"-"`
 }
 
 type JwtCustomClaims struct {

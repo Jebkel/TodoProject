@@ -68,9 +68,9 @@ func (RouterAuth) Register(c echo.Context) error {
 
 	// Возврат ответа с JWT токенами и информацией о пользователе
 	return c.JSON(http.StatusOK, echo.Map{
-		"access_token":  accessToken,
-		"refresh_token": refreshToken,
-		"user":          user,
+		"access_token":  &accessToken,
+		"refresh_token": &refreshToken,
+		"user":          &user,
 	})
 }
 
@@ -123,9 +123,9 @@ func (RouterAuth) Login(c echo.Context) error {
 
 	// Возврат ответа с JWT токенами и информацией о пользователе
 	return c.JSON(http.StatusOK, echo.Map{
-		"access_token":  accessToken,
-		"refresh_token": refreshToken,
-		"user":          user,
+		"access_token":  &accessToken,
+		"refresh_token": &refreshToken,
+		"user":          &user,
 	})
 }
 

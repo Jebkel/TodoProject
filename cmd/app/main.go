@@ -1,6 +1,7 @@
 package main
 
 import (
+	"ToDoProject/internal/customValidations"
 	"ToDoProject/internal/database"
 	"ToDoProject/internal/mail"
 	"ToDoProject/internal/middlewares"
@@ -9,7 +10,6 @@ import (
 	"ToDoProject/tools"
 	"database/sql"
 	"fmt"
-	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/labstack/echo/v4"
@@ -40,7 +40,8 @@ func main() {
 	i18n := locales.Init()
 
 	e.HTTPErrorHandler = middlewares.NewHttpErrorHandler(tools.NewErrorStatusCodeMaps()).Handler
-	e.Validator = &tools.CustomValidator{Validator: validator.New()}
+
+	e.Validator = &tools.CustomValidator{Validator: customValidations.Init()}
 
 	mailer := &mail.Mailer{}
 	mailer.Init()

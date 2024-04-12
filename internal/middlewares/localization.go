@@ -14,13 +14,14 @@ func Localization(i18n *goeasyi18n.I18n) echo.MiddlewareFunc {
 			language := "en"
 
 			if user, ok := dbUser.(*models.User); ok {
-
 				language = user.Language
 			} else if acceptLanguageHeader := c.Request().Header.Get("Accept-Language"); acceptLanguageHeader != "" {
 				language = tools.ParseAcceptLanguage(acceptLanguageHeader)[0].Lang
 			}
+
 			c.Set("i18n", i18n)
 			c.Set("lang", language)
+
 			return next(c)
 		}
 	}

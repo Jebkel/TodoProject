@@ -59,6 +59,10 @@ func (eh *HttpErrorHandler) Handler(err error, c echo.Context) {
 				he = herr
 			}
 		}
+		he = &echo.HTTPError{
+			Code:    eh.getStatusCode(err),
+			Message: unwrapRecursive(err).Error(),
+		}
 	case validator.ValidationErrors:
 		errorsMessages := map[string]interface{}{}
 		i18n := c.Get("i18n").(*goeasyi18n.I18n)
@@ -84,8 +88,9 @@ func (eh *HttpErrorHandler) Handler(err error, c echo.Context) {
 	}
 
 	if _, ok := he.Message.(string); ok {
-		he.Message = map[string]interface{}{"message": err.Error()}
+		he.Message = map[string]interface{}{"errors": err.Error()}
 	}
+
 	// Send response
 	if !c.Response().Committed {
 		if c.Request().Method == http.MethodHead {
@@ -97,4 +102,5 @@ func (eh *HttpErrorHandler) Handler(err error, c echo.Context) {
 			c.Logger().Error(err)
 		}
 	}
+
 }

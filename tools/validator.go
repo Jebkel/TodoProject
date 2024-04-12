@@ -4,7 +4,7 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-// CustomValidator : custom validator
+// CustomValidator : custom validatorCustom
 type CustomValidator struct {
 	Validator *validator.Validate
 }

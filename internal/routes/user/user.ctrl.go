@@ -9,14 +9,6 @@ import (
 	"net/http"
 )
 
-func (RouterUser) Me(c echo.Context) error {
-	user := c.Get("db_user").(*models.User)
-
-	return c.JSON(http.StatusOK, echo.Map{
-		"user": user,
-	})
-}
-
 func (RouterUser) RefreshJWTToken(c echo.Context) error {
 	// Получение данных из echo контекста
 	db := tools.GetDBFromContext(c)
